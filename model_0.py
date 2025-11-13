@@ -1,0 +1,1 @@
+# Una red neuronal con 2 capas intermedias (500,300) y una capa de salida SOFTMAX usando Cross Entropy como función de pérdida. Tasa de aprendizaje 0,01.
