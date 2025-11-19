@@ -1,28 +1,23 @@
 # Una red convolucional con la siguiente configuración: INPUT -> CONV -> RELU -> FC -> RELU -> FC
+
 import torch
-import torchvision
 
 import torch.nn as nn
 import torch.nn.functional as F
-import torch.optim as optim # Funcion de perdida y optimizador
 
-from plot_scripts.plots import imshow
+from plot_scripts.plots import plot_metrics
 from preprocess import mnist_test_loader, mnist_train_loader, classes
 
-device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-
-print(device)
+from train_and_test import train, test, device
 
 class Net(nn.Module):
 
     def __init__(self):
         super().__init__()
-        self.conv1 = nn.Conv2d(1, 6, 3)
+        self.conv1 = nn.Conv2d(1, 8, 3) # salida: 8x26x26 sin padding
 
         # Ojo, depende de cada modelo
-        # self.fc1 = nn.Linear(6 * 3 * 3, 120)
-        # Revisar los canales de entrada
-        self.fc1 = nn.Linear(4056, 120)
+        self.fc1 = nn.Linear(8 * 26  * 26, 120)
         self.fc2 = nn.Linear(120, 10)
        
     
@@ -35,83 +30,10 @@ class Net(nn.Module):
 
         return out
 
+net0 = Net() 
+net0.to(device)
 
-net = Net() 
-net.to(device)
+path, train_losses, train_accuracies, test_losses, test_accuracies = train(net0, mnist_train_loader, mnist_test_loader,path = "./net/mnist_net0.pth" )
+test(net0, mnist_test_loader, classes, path)
 
-
-def train( trainloader, learning_rate=0.01, epochs = 10):
-
-    # Funcion de perdida, especifica para problemas multiclase
-    criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(net.parameters(), lr=learning_rate, momentum=0.9)
-
-    for epoch in range(epochs): 
-
-        running_loss = 0.0
-
-        for i, data in enumerate(trainloader, 0):
-
-            # get the inputs; data is a list of [inputs, labels]
-            # inputs, labels = data
-            inputs, labels = data[0].to(device), data[1].to(device)
-
-            # zero the parameter gradients
-            optimizer.zero_grad()
-
-            # forward + backward + optimize
-            outputs = net(inputs)
-            loss = criterion(outputs, labels)
-            loss.backward()
-            optimizer.step()
-
-            # print statistics
-            running_loss += loss.item()
-            if i % 2000 == 1999:    # print every 2000 mini-batches
-                print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss / 2000:.3f}')
-                running_loss = 0.0
-
-    print('Finished Training')
-
-    PATH = './mnist_net.pth'
-    torch.save(net.state_dict(), PATH)
-
-    return PATH
-
-
-
-
-
-def test(testloader, classes, PATH):
-
-   
-    net.load_state_dict(torch.load(PATH, weights_only=True))
-
-    # prepare to count predictions for each class
-    correct_pred = {classname: 0 for classname in classes}
-    total_pred = {classname: 0 for classname in classes}
-
-    # again no gradients needed
-    with torch.no_grad():
-        for data in testloader:
-            images, labels = data
-            images = images.to(device)
-            labels = labels.to(device)
-
-            outputs = net(images)
-            _, predictions = torch.max(outputs, 1)
-            # collect the correct predictions for each class
-            for label, prediction in zip(labels, predictions):
-                if label == prediction:
-                    correct_pred[classes[label]] += 1
-                total_pred[classes[label]] += 1
-
-
-    # print accuracy for each class
-    for classname, correct_count in correct_pred.items():
-        accuracy = 100 * float(correct_count) / total_pred[classname]
-        print(f'Accuracy for class: {classname:5s} is {accuracy:.1f} %')
-
-
-PATH = train(mnist_train_loader)
-test(mnist_test_loader, classes, PATH)
+plot_metrics(train_losses, test_losses, train_accuracies, test_accuracies, prefix="figures/mnist_m0_")
