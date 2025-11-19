@@ -12,3 +12,29 @@ def imshow(img):
     plt.show()
 
 
+def plot_metrics(train_losses, test_losses, train_accs, test_accs, prefix="mnist"):
+    epochs = range(1, len(train_losses) + 1)
+
+    # Loss
+    plt.figure()
+    plt.plot(epochs, train_losses, label="Train Loss", marker='o')
+    plt.plot(epochs, test_losses, label="Test Loss", marker='x')
+    plt.title("Loss per epoch")
+    plt.xlabel("Epoch")
+    plt.ylabel("Loss")
+    plt.legend()
+    plt.grid(True)
+    plt.savefig(f"{prefix}_loss.png")
+    plt.close()
+
+    # Accuracy
+    plt.figure()
+    plt.plot(epochs, train_accs, label="Train Accuracy", marker='o')
+    plt.plot(epochs, test_accs, label="Test Accuracy", marker='x')
+    plt.title("Accuracy per epoch")
+    plt.xlabel("Epoch")
+    plt.ylabel("Accuracy (%)")
+    plt.legend()
+    plt.grid(True)
+    plt.savefig(f"{prefix}_accuracy.png")
+    plt.close()
