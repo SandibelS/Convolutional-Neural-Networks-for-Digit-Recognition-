@@ -41,7 +41,7 @@ class Net1(nn.Module):
 net1 = Net1() 
 net1.to(device)
 
-path, train_losses, train_accuracies, test_losses, test_accuracies = train(net1, mnist_train_loader, mnist_test_loader, path="./net/mnist_net1.pth")
+path, train_losses, train_accuracies, test_losses, test_accuracies = train(net1, mnist_train_loader, mnist_test_loader, path=".mnist_net1.pth")
 test(net1, mnist_test_loader, classes, path)
 
 # plot_training_metrics(train_losses, train_accuracies)

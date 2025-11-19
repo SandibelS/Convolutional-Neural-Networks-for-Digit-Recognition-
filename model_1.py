@@ -33,7 +33,7 @@ class Net(nn.Module):
 net0 = Net() 
 net0.to(device)
 
-path, train_losses, train_accuracies, test_losses, test_accuracies = train(net0, mnist_train_loader, mnist_test_loader,path = "./net/mnist_net0.pth" )
+path, train_losses, train_accuracies, test_losses, test_accuracies = train(net0, mnist_train_loader, mnist_test_loader,path = ".mnist_net0.pth" )
 test(net0, mnist_test_loader, classes, path)
 
 plot_metrics(train_losses, test_losses, train_accuracies, test_accuracies, prefix="figures/mnist_m0_")
