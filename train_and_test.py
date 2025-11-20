@@ -9,14 +9,43 @@ import torch.optim as optim # Funcion de perdida y optimizador
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 print(device)
 
+#------------------    EARLY STOPPING    ------------------#
+
+class EarlyStopping:
+    def __init__(self, patience=5, delta=0):
+        self.patience = patience
+        self.delta = delta
+        self.best_score = None
+        self.early_stop = False
+        self.counter = 0
+        self.best_model_state = None
+
+    def __call__(self, val_loss, model):
+        score = -val_loss
+
+        if self.best_score is None:
+            self.best_score = score
+            self.best_model_state = model.state_dict()
+        elif score < self.best_score + self.delta:
+            self.counter += 1
+            if self.counter >= self.patience:
+                self.early_stop = True
+        else:
+            self.best_score = score
+            self.best_model_state = model.state_dict()
+            self.counter = 0
+
+    def load_best_model(self, model):
+        model.load_state_dict(self.best_model_state)
 
 #------------------     ENTRENAMIENTO Y TEST    ------------------#
 
-def train(net, trainloader, testloader, learning_rate=0.01, epochs = 5, path = "./mnist_net.pth"):
+def train(net, trainloader, testloader, learning_rate=0.01, epochs = 50, path = "./mnist_net.pth"):
 
     # Funcion de perdida, especifica para problemas multiclase
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(net.parameters(), lr=learning_rate, momentum=0.9)
+    early_stopping = EarlyStopping(patience=5, delta=0.01)
 
     # Listas para guardar el historial de perdidas y de precision para luego hacer graficas
     train_losses, test_losses = [], []
@@ -62,10 +91,19 @@ def train(net, trainloader, testloader, learning_rate=0.01, epochs = 5, path = "
 
         print(f"Epoch {epoch+1}: Train Loss={train_losses[-1]:.4f}, Test Loss={test_losses[-1]:.4f}, Train Acc={train_accuracies[-1]:.2f}%, Test Acc={test_accuracies[-1]:.2f}%")
 
+        early_stopping(test_losses[-1], net)
+
+        if early_stopping.early_stop:
+
+            print("Early stopping")
+            torch.save(net.state_dict(), path)
+            print("Modelo guardado en:", path)
+
+            return path, train_losses, train_accuracies, test_losses, test_accuracies
+
     
 
     print('Finished Training')
-
 
     torch.save(net.state_dict(), path)
     print("Modelo guardado en:", path)
@@ -102,4 +140,21 @@ def test(net, testloader, classes, path):
     for classname, correct_count in correct_pred.items():
         accuracy = 100 * float(correct_count) / total_pred[classname]
         print(f'Accuracy for class: {classname:5s} is {accuracy:.1f} %')
+
+def get_all_preds_and_labels(model, dataloader, device):
+    
+    model.eval()
+    all_preds = []
+    all_labels = []
+
+    with torch.no_grad():
+        for inputs, labels in dataloader:
+            inputs = inputs.to(device)
+            outputs = model(inputs)
+            _, preds = torch.max(outputs, 1)
+            all_preds.extend(preds.cpu().numpy())
+            all_labels.extend(labels.numpy())
+
+    return all_preds, all_labels
+
 
