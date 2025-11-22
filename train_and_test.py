@@ -40,11 +40,15 @@ class EarlyStopping:
 
 #------------------     ENTRENAMIENTO Y TEST    ------------------#
 
-def train(net, trainloader, testloader, learning_rate=0.01, epochs = 50, path = "./mnist_net.pth"):
+def train(net, trainloader, testloader, learning_rate=0.01, epochs = 50, optimizer_="SGD", path = "./mnist_net.pth"):
 
     # Funcion de perdida, especifica para problemas multiclase
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(net.parameters(), lr=learning_rate, momentum=0.9)
+    if optimizer_=="SGD":
+        optimizer = optim.SGD(net.parameters(), lr=learning_rate, momentum=0.9)
+    else:
+        optimizer = optim.Adam(net.parameters(), lr=0.0001)
+
     early_stopping = EarlyStopping(patience=5, delta=0.01)
 
     # Listas para guardar el historial de perdidas y de precision para luego hacer graficas
@@ -52,7 +56,7 @@ def train(net, trainloader, testloader, learning_rate=0.01, epochs = 50, path = 
     train_accuracies, test_accuracies = [], []
 
     for epoch in range(epochs): 
-
+        net.train()
         running_loss = 0.0
         correct = 0
         total = 0
