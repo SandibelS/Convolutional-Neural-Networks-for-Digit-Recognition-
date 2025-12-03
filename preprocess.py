@@ -5,7 +5,7 @@ from plot_scripts.plots import imshow
 
 # Descargar dataset. Se guardan en ./data
 
-batch_size = 4
+batch_size = 128
 
 # Conjunto de entrenamiento
 mnist_train = datasets.MNIST(root='./data', train=True, download=True, transform=transforms.ToTensor())
@@ -24,8 +24,3 @@ classes = ("0", "1", "2", "3", "4", "5", "6", "7", "8", "9")
 # get some random training images
 dataiter = iter(mnist_train_loader)
 images, labels = next(dataiter)
-
-# show images
-imshow(torchvision.utils.make_grid(images))
-# print labels
-print(' '.join(f'{classes[labels[j]]:5s}' for j in range(batch_size)))
